@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Marcador Digital de Fútbol</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Orbitron', sans-serif;
+    background: #000;
+    color: #fff;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .pantalla {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    position: relative;
+    flex-direction: column;
+  }
+  
+  .pantalla.activa { display: flex; }
+  
+  /* Header compacto */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1vh 2vw;
+    height: 8vh;
+    background: #000;
+  }
+  
+  .hora-actual {
+    font-size: clamp(0.9rem, 2vw, 1.3rem);
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  
+  .fase-label {
+    font-size: clamp(0.8rem, 1.8vw, 1.1rem);
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+  }
+  
+  .header-botones {
+    display: flex;
+    gap: 1vw;
+    align-items: center;
+  }
+  
+  .btn-icono {
+    width: 5vh;
+    height: 5vh;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: transparent;
+    color: #fff;
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-family: 'Orbitron', sans-serif;
+    position: relative;
+  }
+  
+  .btn-icono:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Indicador de Wake Lock activo */
+  .btn-icono.wakelock-activo {
+    border-color: #00ff00;
+    color: #00ff00;
+  }
+  
+  .btn-icono.wakelock-activo::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    background: #00ff00;
+    border-radius: 50%;
+    animation: pulso 2s infinite;
+  }
+  
+  @keyframes pulso {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+  }
+  
+  /* Centro: Temporizador gigante */
+  .centro {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2vh 2vw;
+    min-height: 0;
+  }
+  
+  .tiempo-principal {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    text-align: center;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.05em;
+  }
+  
+  .tiempo-principal.verde { color: #00ff00; }
+  .tiempo-principal.rojo { color: #ff0000; }
+  .tiempo-principal.azul { color: #0088ff; }
+  
+  .tiempo-base {
+    font-size: clamp(6rem, 30vw, 25rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  
+  .tiempo-extra {
+    font-size: clamp(2rem, 10vw, 8rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-left: 0.1em;
+  }
+  
+  .info-secundaria {
+    display: flex;
+    justify-content: center;
+    gap: 4vw;
+    padding: 1.5vh 2vw;
+    height: 10vh;
+    align-items: center;
+  }
+  
+  .info-item {
+    text-align: center;
+  }
+  
+  .info-item .label {
+    font-size: clamp(0.6rem, 1.3vw, 0.8rem);
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 0.3vh;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  
+  .info-item .valor {
+    font-size: clamp(1rem, 2.5vw, 1.8rem);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  
+  .info-item .valor.verde { color: #00ff00; }
+  .info-item .valor.rojo { color: #ff0000; }
+  .info-item .valor.azul { color: #0088ff; }
+  
+  .footer {
+    padding: 1vh 2vw 2vh;
+    height: 14vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8vh;
+  }
+  
+  .controles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.8vw;
+    flex: 1;
+  }
+  
+  .btn {
+    border: 2px solid #fff;
+    border-radius: 0.4vh;
+    background: transparent;
+    color: #fff;
+    font-size: clamp(1.2rem, 2.5vw, 2rem);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  
+  .btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .btn:active {
+    transform: scale(0.95);
+  }
+  
+  .btn-full {
+    grid-column: span 4;
+  }
+  
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 2vh 2vw;
+  }
+  
+  .modal-overlay.activo { display: flex; }
+  
+  .modal {
+    background: #000;
+    border: 2px solid #fff;
+    padding: 3vh 3vw;
+    max-width: 90vw;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .modal h2 {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 2vh;
+    font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  
+  .modal .aviso {
+    background: transparent;
+    border: 1px solid #fff;
+    padding: 1.5vh 1.5vw;
+    margin-bottom: 2vh;
+    font-size: clamp(0.75rem, 1.8vw, 0.95rem);
+    color: #fff;
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 400;
+  }
+  
+  .modal .aviso.peligro {
+    border-color: #ff0000;
+    color: #ff0000;
+  }
+  
+  .modal .aviso.info {
+    border-color: #0088ff;
+    color: #0088ff;
+  }
+  
+  .modal-opciones {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5vh;
+    margin: 2vh 0;
+  }
+  
+  .modal-opcion {
+    display: flex;
+    align-items: center;
+    gap: 1vw;
+    padding: 1.5vh 1.5vw;
+    background: transparent;
+    border: 1px solid #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .modal-opcion:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .modal-opcion input[type="radio"] {
+    width: 2vh;
+    height: 2vh;
+    cursor: pointer;
+    accent-color: #fff;
+  }
+  
+  .modal-opcion label {
+    cursor: pointer;
+    flex: 1;
+    color: #fff;
+  }
+  
+  .modal-opcion .titulo-opcion {
+    font-size: clamp(0.85rem, 1.8vw, 1rem);
+    margin-bottom: 0.5vh;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 500;
+  }
+  
+  .modal-opcion .descripcion-opcion {
+    font-size: clamp(0.65rem, 1.3vw, 0.8rem);
+    color: #888;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 400;
+  }
+  
+  .modal-botones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1vw;
+    margin-top: 2vh;
+  }
+  
+  .config-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+  }
+  
+  .config-form label {
+    font-size: clamp(0.85rem, 1.8vw, 1rem);
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 500;
+  }
+  
+  .config-form input {
+    padding: 1.5vh 1vw;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    text-align: center;
+    background: transparent;
+    color: #00ff00;
+    border: 2px solid #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  
+  .pantalla-config-contenido {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 4vh 4vw;
+  }
+  
+  .pantalla-config-contenido h1 {
+    font-size: clamp(1.3rem, 3.5vw, 2.2rem);
+    color: #fff;
+    margin-bottom: 4vh;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+  
+  .final-resumen {
+    flex: 1;
+    padding: 2vh 4vw;
+    overflow-y: auto;
+  }
+  
+  .final-resumen .seccion {
+    margin-bottom: 2vh;
+    padding-bottom: 1.5vh;
+    border-bottom: 1px solid #333;
+  }
+  
+  .final-resumen .seccion:last-child {
+    border-bottom: none;
+  }
+  
+  .final-resumen .titulo-seccion {
+    font-size: clamp(0.85rem, 1.8vw, 1rem);
+    color: #fff;
+    margin-bottom: 1vh;
+    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  
+  .final-resumen .fila {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.8vh 0;
+    font-size: clamp(0.75rem, 1.6vw, 0.95rem);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 400;
+  }
+  
+  .final-resumen .fila span:first-child {
+    color: #888;
+  }
+  
+  .final-resumen .fila span:last-child {
+    color: #fff;
+    font-weight: 700;
+  }
+  
+  /* Video invisible para fallback */
+  #video-fallback {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  @media (orientation: portrait) {
+    .controles {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .info-secundaria {
+      flex-direction: row;
+    }
+  }
+  
+  @media (orientation: landscape) and (max-height: 500px) {
+    .header { height: 6vh; }
+    .info-secundaria { height: 8vh; }
+    .footer { height: 12vh; }
+    
+    .tiempo-base {
+      font-size: clamp(5rem, 25vh, 15rem);
+    }
+    
+    .tiempo-extra {
+      font-size: clamp(1.5rem, 8vh, 5rem);
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Video invisible para mantener pantalla encendida (fallback) -->
+<video id="video-fallback" loop muted playsinline>
+  <source src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAB1tZGF0AAAA" type="video/mp4">
+</video>
+
+<!-- MODAL DE CONFIGURACIÓN -->
+<div id="modal-config" class="modal-overlay">
+  <div class="modal">
+    <h2>⚙ EDITAR CONFIGURACIÓN</h2>
+    <div class="aviso">
+      Los cambios se aplicarán inmediatamente sin afectar el tiempo ya jugado
+    </div>
+    <div class="config-form">
+      <div>
+        <label>Duración de cada tiempo (minutos):</label>
+        <input type="number" id="modal-tiempo" min="1" max="90">
+      </div>
+      <div>
+        <label>Duración del descanso (minutos):</label>
+        <input type="number" id="modal-descanso" min="1" max="60">
+      </div>
+      <div class="modal-botones">
+        <button class="btn" onclick="cerrarModal()">✕</button>
+        <button class="btn" onclick="guardarConfig()">✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE REINICIO -->
+<div id="modal-restart" class="modal-overlay">
+  <div class="modal">
+    <h2> REINICIAR PARTIDO</h2>
+    <div class="aviso peligro">
+      ¿Estás seguro de reiniciar el partido? Se perderá todo el progreso actual.
+    </div>
+    <div class="modal-opciones">
+      <div class="modal-opcion" onclick="seleccionarOpcion('mantener')">
+        <input type="radio" name="opcion-reinicio" id="opcion-mantener" value="mantener" checked>
+        <label for="opcion-mantener">
+          <div class="titulo-opcion">Mantener configuración actual</div>
+          <div class="descripcion-opcion">Reinicia el partido pero conserva los tiempos configurados</div>
+        </label>
+      </div>
+      <div class="modal-opcion" onclick="seleccionarOpcion('config')">
+        <input type="radio" name="opcion-reinicio" id="opcion-config" value="config">
+        <label for="opcion-config">
+          <div class="titulo-opcion">Volver a configuración inicial</div>
+          <div class="descripcion-opcion">Reinicia todo y vuelve a la pantalla de configuración</div>
+        </label>
+      </div>
+    </div>
+    <div class="modal-botones">
+      <button class="btn" onclick="cerrarModalRestart()">✕</button>
+      <button class="btn" onclick="confirmarReinicio()"></button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE PANTALLA ENCENDIDA -->
+<div id="modal-wakelock" class="modal-overlay">
+  <div class="modal">
+    <h2>🔒 MANTENER PANTALLA ENCENDIDA</h2>
+    <div class="aviso info">
+      Esta función evita que el teléfono se bloquee automáticamente mientras usas el marcador.
+    </div>
+    <div class="modal-opciones">
+      <div class="modal-opcion" onclick="activarWakeLock()">
+        <label>
+          <div class="titulo-opcion">🔒 Activar Bloqueo de Pantalla</div>
+          <div class="descripcion-opcion">La pantalla permanecerá encendida hasta que lo desactives</div>
+        </label>
+      </div>
+      <div class="modal-opcion" onclick="activarPantallaCompleta()">
+        <label>
+          <div class="titulo-opcion"> Pantalla Completa</div>
+          <div class="descripcion-opcion">Oculta la barra del navegador para mayor visibilidad</div>
+        </label>
+      </div>
+      <div class="modal-opcion" onclick="cerrarModalWakeLock()">
+        <label>
+          <div class="titulo-opcion">✕ Cerrar</div>
+          <div class="descripcion-opcion">Volver al marcador</div>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA 1: CONFIGURACIÓN INICIAL -->
+<div id="pantalla-config" class="pantalla activa">
+  <div class="pantalla-config-contenido">
+    <h1>Marcador Digital</h1>
+    <div class="config-form">
+      <div>
+        <label>Duración de cada tiempo (minutos):</label>
+        <input type="number" id="cfg-tiempo" value="45" min="1" max="90">
+      </div>
+      <div>
+        <label>Duración del descanso (minutos):</label>
+        <input type="number" id="cfg-descanso" value="15" min="1" max="60">
+      </div>
+      <button class="btn btn-full" onclick="iniciarPartido()" style="margin-top: 2vh;">▶ INICIAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA 2 y 5: TIEMPO NORMAL -->
+<div id="pantalla-normal" class="pantalla">
+  <div class="header">
+    <div class="hora-actual" id="hora-normal">00:00:00</div>
+    <div class="fase-label" id="fase-normal">PRIMER TIEMPO</div>
+    <div class="header-botones">
+      <button class="btn-icono" id="btn-wakelock" onclick="abrirModalWakeLock()" title="Mantener pantalla encendida">🔒</button>
+      <button class="btn-icono" onclick="abrirModalRestart()">↺</button>
+      <button class="btn-icono" onclick="abrirModal()">⚙</button>
+    </div>
+  </div>
+  
+  <div class="centro">
+    <div class="tiempo-principal verde" id="tiempo-normal">
+      <span class="tiempo-base">00:00</span>
+    </div>
+  </div>
+  
+  <div class="info-secundaria">
+    <div class="info-item" id="info-primer-tiempo" style="display:none;">
+      <div class="label">1er Tiempo</div>
+      <div class="valor verde" id="valor-primer-tiempo">00:00</div>
+    </div>
+    <div class="info-item">
+      <div class="label">Total</div>
+      <div class="valor verde" id="valor-total-normal">00:00</div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <div class="controles">
+      <button class="btn" id="btn-play-normal" onclick="togglePausaNormal()"></button>
+      <button class="btn" onclick="agregarMinuto(1)">+1</button>
+      <button class="btn" onclick="agregarMinuto(2)">+2</button>
+      <button class="btn" onclick="finalizarTiempo()">⏹</button>
+    </div>
+    <div class="controles">
+      <button class="btn" onclick="agregarMinuto(5)">+5</button>
+      <button class="btn" onclick="agregarMinuto(10)">+10</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA 3 y 6: TIEMPO ADICIONAL -->
+<div id="pantalla-adicional" class="pantalla">
+  <div class="header">
+    <div class="hora-actual" id="hora-adicional">00:00:00</div>
+    <div class="fase-label">TIEMPO ADICIONAL</div>
+    <div class="header-botones">
+      <button class="btn-icono" id="btn-wakelock-ad" onclick="abrirModalWakeLock()">🔒</button>
+      <button class="btn-icono" onclick="abrirModalRestart()">↺</button>
+      <button class="btn-icono" onclick="abrirModal()">⚙</button>
+    </div>
+  </div>
+  
+  <div class="centro">
+    <div class="tiempo-principal rojo" id="tiempo-adicional">
+      <span class="tiempo-base">45</span>
+      <span class="tiempo-extra">+00:00</span>
+    </div>
+  </div>
+  
+  <div class="info-secundaria">
+    <div class="info-item">
+      <div class="label">Adicional</div>
+      <div class="valor rojo" id="valor-adicional">+00:00</div>
+    </div>
+    <div class="info-item">
+      <div class="label">Total</div>
+      <div class="valor rojo" id="valor-total-adicional">00:00</div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <div class="controles">
+      <button class="btn" id="btn-play-adicional" onclick="togglePausaAdicional()">⏸</button>
+      <button class="btn" onclick="agregarMinuto(1)">+1</button>
+      <button class="btn" onclick="agregarMinuto(2)">+2</button>
+      <button class="btn" onclick="finalizarTiempo()">⏹</button>
+    </div>
+    <div class="controles">
+      <button class="btn" onclick="agregarMinuto(5)">+5</button>
+      <button class="btn" onclick="agregarMinuto(10)">+10</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA 4: DESCANSO -->
+<div id="pantalla-descanso" class="pantalla">
+  <div class="header">
+    <div class="hora-actual" id="hora-descanso">00:00:00</div>
+    <div class="fase-label">MEDIO TIEMPO</div>
+    <div class="header-botones">
+      <button class="btn-icono" id="btn-wakelock-desc" onclick="abrirModalWakeLock()">🔒</button>
+      <button class="btn-icono" onclick="abrirModalRestart()">↺</button>
+      <button class="btn-icono" onclick="abrirModal()">⚙</button>
+    </div>
+  </div>
+  
+  <div class="centro">
+    <div class="tiempo-principal azul" id="tiempo-descanso">
+      <span class="tiempo-base">15:00</span>
+    </div>
+  </div>
+  
+  <div class="info-secundaria">
+    <div class="info-item">
+      <div class="label">1er Tiempo</div>
+      <div class="valor azul" id="valor-primer-tiempo-descanso">00:00</div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <div class="controles">
+      <button class="btn btn-full" onclick="continuarAhora()">▶ CONTINUAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA 7: FINALIZADO -->
+<div id="pantalla-final" class="pantalla">
+  <div class="header">
+    <div class="hora-actual" id="hora-final">00:00:00</div>
+    <div class="fase-label">PARTIDO FINALIZADO</div>
+  </div>
+  
+  <div class="final-resumen">
+    <div class="seccion">
+      <div class="titulo-seccion">Información General</div>
+      <div class="fila"><span>Hora de Inicio:</span><span id="final-inicio">--:--</span></div>
+      <div class="fila"><span>Hora de Fin:</span><span id="final-fin">--:--</span></div>
+      <div class="fila"><span>Duración Total del Evento:</span><span id="final-evento">00:00</span></div>
+    </div>
+    
+    <div class="seccion">
+      <div class="titulo-seccion">Primer Tiempo</div>
+      <div class="fila"><span>Tiempo Reglamentario:</span><span id="final-t1-reg">00:00</span></div>
+      <div class="fila"><span>Tiempo Adicional:</span><span id="final-t1-ad">+00:00</span></div>
+      <div class="fila"><span>Total 1er Tiempo:</span><span id="final-t1">00:00</span></div>
+    </div>
+    
+    <div class="seccion">
+      <div class="titulo-seccion">Segundo Tiempo</div>
+      <div class="fila"><span>Tiempo Reglamentario:</span><span id="final-t2-reg">00:00</span></div>
+      <div class="fila"><span>Tiempo Adicional:</span><span id="final-t2-ad">+00:00</span></div>
+      <div class="fila"><span>Total 2do Tiempo:</span><span id="final-t2">00:00</span></div>
+    </div>
+    
+    <div class="seccion">
+      <div class="titulo-seccion">Descanso</div>
+      <div class="fila"><span>Duración del Medio Tiempo:</span><span id="final-desc">00:00</span></div>
+    </div>
+    
+    <div class="seccion">
+      <div class="titulo-seccion">Totales</div>
+      <div class="fila"><span>Tiempo Total de Juego:</span><span id="final-total">00:00</span></div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <div class="controles">
+      <button class="btn btn-full" onclick="reiniciar()">↺ NUEVO PARTIDO</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ VARIABLES GLOBALES ============
+let configTiempo = 45;
+let configDescanso = 15;
+
+let faseActual = 'config';
+let pausaActiva = false;
+
+let tiempoActualSegundos = 0;
+let tiempoAdicionalSegundos = 0;
+let primerTiempoTotalSegundos = 0;
+let primerTiempoAdicionalSegundos = 0;
+let segundoTiempoTotalSegundos = 0;
+let segundoTiempoAdicionalSegundos = 0;
+let tiempoTotalJuegoSegundos = 0;
+let descansoRestanteSegundos = 0;
+let descansoTranscurridoSegundos = 0;
+
+let horaInicioPartido = '';
+let fechaInicioPartido = null;
+let intervaloPrincipal = null;
+let intervaloDescanso = null;
+
+// Wake Lock
+let wakeLockActivo = false;
+let wakeLockSentinel = null;
+
+// ============ FUNCIONES DE UTILIDAD ============
+function formatoMMSS(segundos) {
+  const m = Math.floor(segundos / 60).toString().padStart(2, '0');
+  const s = (segundos % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function horaActualString() {
+  const ahora = new Date();
+  return ahora.toLocaleTimeString('es-ES', { hour12: false });
+}
+
+function mostrarPantalla(id) {
+  document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+  document.getElementById(id).classList.add('activa');
+}
+
+// ============ WAKE LOCK (MANTENER PANTALLA ENCENDIDA) ============
+async function activarWakeLock() {
+  try {
+    // Método 1: Wake Lock API (moderno)
+    if ('wakeLock' in navigator) {
+      wakeLockSentinel = await navigator.wakeLock.request('screen');
+      wakeLockActivo = true;
+      actualizarIndicadorWakeLock();
+      
+      wakeLockSentinel.addEventListener('release', () => {
+        console.log('Wake Lock liberado');
+      });
+      
+      // Re-adquirir cuando la página vuelve a ser visible
+      document.addEventListener('visibilitychange', manejarVisibilidad);
+      
+      alert('✓ Pantalla bloqueada. No se apagará automáticamente.');
+    } else {
+      // Método 2: Fallback con video
+      activarVideoFallback();
+    }
+    cerrarModalWakeLock();
+  } catch (err) {
+    console.error('Error al activar Wake Lock:', err);
+    alert('⚠ No se pudo activar. Intenta con la configuración del teléfono:\n\nAjustes → Pantalla → Tiempo de espera → Nunca');
+  }
+}
+
+function desactivarWakeLock() {
+  if (wakeLockSentinel) {
+    wakeLockSentinel.release();
+    wakeLockSentinel = null;
+  }
+  wakeLockActivo = false;
+  actualizarIndicadorWakeLock();
+  document.removeEventListener('visibilitychange', manejarVisibilidad);
+  
+  // Detener video fallback
+  const video = document.getElementById('video-fallback');
+  video.pause();
+}
+
+async function manejarVisibilidad() {
+  if (document.visibilityState === 'visible' && wakeLockActivo) {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+      }
+    } catch (err) {
+      console.error('Error al re-adquirir Wake Lock:', err);
+    }
+  }
+}
+
+function activarVideoFallback() {
+  const video = document.getElementById('video-fallback');
+  video.play().then(() => {
+    wakeLockActivo = true;
+    actualizarIndicadorWakeLock();
+    alert('✓ Modo de respaldo activado. La pantalla debería mantenerse encendida.');
+  }).catch(err => {
+    console.error('Error con video fallback:', err);
+    alert('⚠ No se pudo activar. Configura manualmente:\n\nAjustes → Pantalla → Tiempo de espera → Nunca');
+  });
+}
+
+function actualizarIndicadorWakeLock() {
+  const botones = document.querySelectorAll('[id^="btn-wakelock"]');
+  botones.forEach(btn => {
+    if (wakeLockActivo) {
+      btn.classList.add('wakelock-activo');
+      btn.textContent = '🔓';
+      btn.title = 'Pantalla bloqueada (tocar para desactivar)';
+      btn.onclick = () => {
+        if (confirm('¿Desactivar bloqueo de pantalla?')) {
+          desactivarWakeLock();
+        }
+      };
+    } else {
+      btn.classList.remove('wakelock-activo');
+      btn.textContent = '';
+      btn.title = 'Mantener pantalla encendida';
+      btn.onclick = abrirModalWakeLock;
+    }
+  });
+}
+
+function abrirModalWakeLock() {
+  document.getElementById('modal-wakelock').classList.add('activo');
+}
+
+function cerrarModalWakeLock() {
+  document.getElementById('modal-wakelock').classList.remove('activo');
+}
+
+// ============ PANTALLA COMPLETA ============
+function activarPantallaCompleta() {
+  const elem = document.documentElement;
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) {
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) {
+    elem.msRequestFullscreen();
+  }
+  cerrarModalWakeLock();
+}
+
+// ============ MODAL DE CONFIGURACIÓN ============
+function abrirModal() {
+  document.getElementById('modal-tiempo').value = configTiempo;
+  document.getElementById('modal-descanso').value = configDescanso;
+  document.getElementById('modal-config').classList.add('activo');
+}
+
+function cerrarModal() {
+  document.getElementById('modal-config').classList.remove('activo');
+}
+
+function guardarConfig() {
+  const nuevoTiempo = parseInt(document.getElementById('modal-tiempo').value) || configTiempo;
+  const nuevoDescanso = parseInt(document.getElementById('modal-descanso').value) || configDescanso;
+  
+  const tiempoAnterior = configTiempo;
+  const descansoAnterior = configDescanso;
+  
+  configTiempo = nuevoTiempo;
+  configDescanso = nuevoDescanso;
+  
+  if (faseActual === 'descanso') {
+    const diferenciaDescanso = (nuevoDescanso - descansoAnterior) * 60;
+    descansoRestanteSegundos += diferenciaDescanso;
+    if (descansoRestanteSegundos < 0) descansoRestanteSegundos = 0;
+  }
+  
+  if ((faseActual === 't1-normal' || faseActual === 't2-normal') && 
+      tiempoActualSegundos >= configTiempo * 60) {
+    if (faseActual === 't1-normal') faseActual = 't1-adicional';
+    else if (faseActual === 't2-normal') faseActual = 't2-adicional';
+    mostrarPantalla('pantalla-adicional');
+  }
+  
+  cerrarModal();
+  actualizarPantallaTiempo();
+}
+
+// ============ MODAL DE REINICIO ============
+function abrirModalRestart() {
+  document.getElementById('modal-restart').classList.add('activo');
+}
+
+function cerrarModalRestart() {
+  document.getElementById('modal-restart').classList.remove('activo');
+}
+
+function seleccionarOpcion(valor) {
+  if (valor === 'mantener') {
+    document.getElementById('opcion-mantener').checked = true;
+  } else {
+    document.getElementById('opcion-config').checked = true;
+  }
+}
+
+function confirmarReinicio() {
+  const opcionMantenida = document.getElementById('opcion-mantener').checked;
+  
+  if (intervaloPrincipal) clearInterval(intervaloPrincipal);
+  if (intervaloDescanso) clearInterval(intervaloDescanso);
+  
+  faseActual = 't1-normal';
+  pausaActiva = false;
+  tiempoActualSegundos = 0;
+  tiempoAdicionalSegundos = 0;
+  primerTiempoTotalSegundos = 0;
+  primerTiempoAdicionalSegundos = 0;
+  segundoTiempoTotalSegundos = 0;
+  segundoTiempoAdicionalSegundos = 0;
+  tiempoTotalJuegoSegundos = 0;
+  descansoRestanteSegundos = 0;
+  descansoTranscurridoSegundos = 0;
+  
+  fechaInicioPartido = new Date();
+  horaInicioPartido = horaActualString().substring(0, 5);
+  
+  if (!opcionMantenida) {
+    configTiempo = 45;
+    configDescanso = 15;
+    mostrarPantalla('pantalla-config');
+  } else {
+    document.getElementById('fase-normal').textContent = 'PRIMER TIEMPO';
+    document.getElementById('info-primer-tiempo').style.display = 'none';
+    document.getElementById('btn-play-normal').textContent = '⏸';
+    mostrarPantalla('pantalla-normal');
+    iniciarIntervaloPrincipal();
+  }
+  
+  cerrarModalRestart();
+}
+
+// ============ INICIO DEL PARTIDO ============
+function iniciarPartido() {
+  configTiempo = parseInt(document.getElementById('cfg-tiempo').value) || 45;
+  configDescanso = parseInt(document.getElementById('cfg-descanso').value) || 15;
+  
+  fechaInicioPartido = new Date();
+  horaInicioPartido = horaActualString().substring(0, 5);
+  faseActual = 't1-normal';
+  tiempoActualSegundos = 0;
+  tiempoAdicionalSegundos = 0;
+  primerTiempoTotalSegundos = 0;
+  primerTiempoAdicionalSegundos = 0;
+  segundoTiempoTotalSegundos = 0;
+  segundoTiempoAdicionalSegundos = 0;
+  tiempoTotalJuegoSegundos = 0;
+  descansoRestanteSegundos = 0;
+  descansoTranscurridoSegundos = 0;
+  pausaActiva = false;
+  
+  document.getElementById('fase-normal').textContent = 'PRIMER TIEMPO';
+  document.getElementById('info-primer-tiempo').style.display = 'none';
+  mostrarPantalla('pantalla-normal');
+  iniciarIntervaloPrincipal();
+}
+
+// ============ INTERVALO PRINCIPAL ============
+function iniciarIntervaloPrincipal() {
+  if (intervaloPrincipal) clearInterval(intervaloPrincipal);
+  intervaloPrincipal = setInterval(() => {
+    const hora = horaActualString();
+    document.getElementById('hora-normal').textContent = hora;
+    document.getElementById('hora-adicional').textContent = hora;
+    document.getElementById('hora-descanso').textContent = hora;
+    document.getElementById('hora-final').textContent = hora;
+    
+    if (!pausaActiva && (faseActual === 't1-normal' || faseActual === 't2-normal' || 
+                         faseActual === 't1-adicional' || faseActual === 't2-adicional')) {
+      tiempoActualSegundos++;
+      tiempoTotalJuegoSegundos++;
+      actualizarPantallaTiempo();
+      
+      const limiteSegundos = configTiempo * 60;
+      if (tiempoActualSegundos >= limiteSegundos && tiempoAdicionalSegundos === 0) {
+        if (faseActual === 't1-normal') faseActual = 't1-adicional';
+        else if (faseActual === 't2-normal') faseActual = 't2-adicional';
+        mostrarPantalla('pantalla-adicional');
+      }
+    }
+  }, 1000);
+}
+
+// ============ ACTUALIZAR PANTALLA DE TIEMPO ============
+function actualizarPantallaTiempo() {
+  const limiteSegundos = configTiempo * 60;
+  
+  if (faseActual === 't1-normal' || faseActual === 't2-normal') {
+    document.getElementById('tiempo-normal').innerHTML = 
+      `<span class="tiempo-base">${formatoMMSS(tiempoActualSegundos)}</span>`;
+    document.getElementById('valor-total-normal').textContent = formatoMMSS(tiempoTotalJuegoSegundos);
+  } 
+  else if (faseActual === 't1-adicional' || faseActual === 't2-adicional') {
+    const extraSeg = tiempoActualSegundos - limiteSegundos;
+    const extraMin = Math.floor(extraSeg / 60);
+    const extraSegResto = extraSeg % 60;
+    document.getElementById('tiempo-adicional').innerHTML = 
+      `<span class="tiempo-base">${configTiempo.toString().padStart(2,'0')}</span><span class="tiempo-extra">+${extraMin.toString().padStart(2,'0')}:${extraSegResto.toString().padStart(2,'0')}</span>`;
+    document.getElementById('valor-adicional').textContent = `+${formatoMMSS(extraSeg)}`;
+    document.getElementById('valor-total-adicional').textContent = formatoMMSS(tiempoTotalJuegoSegundos);
+  }
+}
+
+// ============ CONTROLES ============
+function togglePausaNormal() {
+  pausaActiva = !pausaActiva;
+  document.getElementById('btn-play-normal').textContent = pausaActiva ? '▶' : '⏸';
+}
+
+function togglePausaAdicional() {
+  pausaActiva = !pausaActiva;
+  document.getElementById('btn-play-adicional').textContent = pausaActiva ? '▶' : '⏸';
+}
+
+function agregarMinuto(minutos) {
+  tiempoAdicionalSegundos += minutos * 60;
+  if (faseActual === 't1-normal') {
+    faseActual = 't1-adicional';
+    mostrarPantalla('pantalla-adicional');
+  } else if (faseActual === 't2-normal') {
+    faseActual = 't2-adicional';
+    mostrarPantalla('pantalla-adicional');
+  }
+  actualizarPantallaTiempo();
+}
+
+function finalizarTiempo() {
+  if (faseActual === 't1-normal' || faseActual === 't1-adicional') {
+    primerTiempoTotalSegundos = tiempoActualSegundos;
+    primerTiempoAdicionalSegundos = tiempoAdicionalSegundos;
+    iniciarDescanso();
+  } 
+  else if (faseActual === 't2-normal' || faseActual === 't2-adicional') {
+    segundoTiempoTotalSegundos = tiempoActualSegundos;
+    segundoTiempoAdicionalSegundos = tiempoAdicionalSegundos;
+    finalizarPartido();
+  }
+}
+
+// ============ DESCANSO ============
+function iniciarDescanso() {
+  faseActual = 'descanso';
+  descansoRestanteSegundos = configDescanso * 60;
+  descansoTranscurridoSegundos = 0;
+  document.getElementById('valor-primer-tiempo-descanso').textContent = formatoMMSS(primerTiempoTotalSegundos);
+  mostrarPantalla('pantalla-descanso');
+  actualizarDescanso();
+  
+  if (intervaloDescanso) clearInterval(intervaloDescanso);
+  intervaloDescanso = setInterval(() => {
+    descansoRestanteSegundos--;
+    descansoTranscurridoSegundos++;
+    actualizarDescanso();
+    if (descansoRestanteSegundos <= 0) {
+      clearInterval(intervaloDescanso);
+      iniciarSegundoTiempo();
+    }
+  }, 1000);
+}
+
+function actualizarDescanso() {
+  document.getElementById('tiempo-descanso').innerHTML = 
+    `<span class="tiempo-base">${formatoMMSS(Math.max(0, descansoRestanteSegundos))}</span>`;
+}
+
+function continuarAhora() {
+  if (intervaloDescanso) clearInterval(intervaloDescanso);
+  iniciarSegundoTiempo();
+}
+
+// ============ 2DO TIEMPO ============
+function iniciarSegundoTiempo() {
+  faseActual = 't2-normal';
+  tiempoActualSegundos = 0;
+  tiempoAdicionalSegundos = 0;
+  pausaActiva = false;
+  
+  document.getElementById('fase-normal').textContent = 'SEGUNDO TIEMPO';
+  document.getElementById('info-primer-tiempo').style.display = 'block';
+  document.getElementById('valor-primer-tiempo').textContent = formatoMMSS(primerTiempoTotalSegundos);
+  document.getElementById('btn-play-normal').textContent = '⏸';
+  
+  mostrarPantalla('pantalla-normal');
+}
+
+// ============ FINAL DEL PARTIDO ============
+function finalizarPartido() {
+  faseActual = 'final';
+  const fechaFinPartido = new Date();
+  
+  const duracionEventoMs = fechaFinPartido - fechaInicioPartido;
+  const duracionEventoSegundos = Math.floor(duracionEventoMs / 1000);
+  
+  document.getElementById('final-inicio').textContent = horaInicioPartido;
+  document.getElementById('final-fin').textContent = horaActualString().substring(0, 5);
+  document.getElementById('final-evento').textContent = formatoMMSS(duracionEventoSegundos);
+  
+  document.getElementById('final-t1-reg').textContent = formatoMMSS(configTiempo * 60);
+  document.getElementById('final-t1-ad').textContent = `+${formatoMMSS(primerTiempoAdicionalSegundos)}`;
+  document.getElementById('final-t1').textContent = formatoMMSS(primerTiempoTotalSegundos);
+  
+  document.getElementById('final-t2-reg').textContent = formatoMMSS(configTiempo * 60);
+  document.getElementById('final-t2-ad').textContent = `+${formatoMMSS(segundoTiempoAdicionalSegundos)}`;
+  document.getElementById('final-t2').textContent = formatoMMSS(segundoTiempoTotalSegundos);
+  
+  document.getElementById('final-desc').textContent = formatoMMSS(configDescanso * 60);
+  
+  const tiempoTotalJuego = primerTiempoTotalSegundos + segundoTiempoTotalSegundos;
+  document.getElementById('final-total').textContent = formatoMMSS(tiempoTotalJuego);
+  
+  mostrarPantalla('pantalla-final');
+}
+
+function reiniciar() {
+  if (intervaloPrincipal) clearInterval(intervaloPrincipal);
+  if (intervaloDescanso) clearInterval(intervaloDescanso);
+  faseActual = 'config';
+  mostrarPantalla('pantalla-config');
+}
+
+// ============ INICIALIZACIÓN ============
+document.addEventListener('DOMContentLoaded', () => {
+  actualizarIndicadorWakeLock();
+});
+</script>
+
+</body>
+</html>
