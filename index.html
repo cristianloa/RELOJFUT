@@ -39,13 +39,12 @@
   
   .pantalla.activa { display: flex; }
   
-  /* Header compacto */
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1vh 2vw;
-    height: 8vh;
+    height: 10vh;
     background: #000;
   }
   
@@ -67,18 +66,20 @@
   
   .header-botones {
     display: flex;
-    gap: 1vw;
+    gap: 1.5vw;
     align-items: center;
   }
   
   .btn-icono {
-    width: 5vh;
-    height: 5vh;
+    width: 8vh;
+    height: 8vh;
+    min-width: 50px;
+    min-height: 50px;
     border: 2px solid #fff;
     border-radius: 50%;
     background: transparent;
     color: #fff;
-    font-size: clamp(1rem, 2vw, 1.5rem);
+    font-size: clamp(1.5rem, 3vw, 2rem);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -86,13 +87,18 @@
     transition: all 0.2s;
     font-family: 'Orbitron', sans-serif;
     position: relative;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3);
   }
   
   .btn-icono:hover {
     background: rgba(255, 255, 255, 0.2);
   }
   
-  /* Indicador de Wake Lock activo */
+  .btn-icono:active {
+    transform: scale(0.9);
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
   .btn-icono.wakelock-activo {
     border-color: #00ff00;
     color: #00ff00;
@@ -103,8 +109,8 @@
     position: absolute;
     top: -2px;
     right: -2px;
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     background: #00ff00;
     border-radius: 50%;
     animation: pulso 2s infinite;
@@ -115,15 +121,16 @@
     50% { opacity: 0.5; transform: scale(1.2); }
   }
   
-  /* Centro: Temporizador gigante */
+  /* Centro: Contador ocupa todo el ancho */
   .centro {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 2vh 2vw;
+    padding: 2vh 1vw;
     min-height: 0;
+    width: 100%;
   }
   
   .tiempo-principal {
@@ -136,23 +143,37 @@
     align-items: baseline;
     justify-content: center;
     gap: 0.05em;
+    width: 100%;
   }
   
   .tiempo-principal.verde { color: #00ff00; }
   .tiempo-principal.rojo { color: #ff0000; }
   .tiempo-principal.azul { color: #0088ff; }
   
+  /* Tiempo base ocupa todo el ancho */
   .tiempo-base {
-    font-size: clamp(6rem, 30vw, 25rem);
+    font-size: clamp(10rem, 48vw, 40rem);
     font-weight: 900;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.04em;
+    width: 100%;
+    text-align: center;
   }
   
   .tiempo-extra {
-    font-size: clamp(2rem, 10vw, 8rem);
+    font-size: clamp(3rem, 15vw, 12rem);
     font-weight: 500;
     letter-spacing: -0.02em;
     margin-left: 0.1em;
+  }
+  
+  /* Aviso de últimos 10 segundos */
+  .tiempo-principal.aviso {
+    animation: parpadeoAviso 0.5s infinite;
+  }
+  
+  @keyframes parpadeoAviso {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
   
   .info-secundaria {
@@ -190,17 +211,17 @@
   
   .footer {
     padding: 1vh 2vw 2vh;
-    height: 14vh;
+    height: 12vh;
     display: flex;
     flex-direction: column;
-    gap: 0.8vh;
+    justify-content: center;
   }
   
   .controles {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 0.8vw;
-    flex: 1;
+    width: 100%;
   }
   
   .btn {
@@ -208,7 +229,7 @@
     border-radius: 0.4vh;
     background: transparent;
     color: #fff;
-    font-size: clamp(1.2rem, 2.5vw, 2rem);
+    font-size: clamp(1rem, 2.2vw, 1.8rem);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -217,6 +238,9 @@
     font-family: 'Orbitron', sans-serif;
     font-weight: 700;
     letter-spacing: -0.01em;
+    padding: 1vh 0.5vw;
+    min-height: 8vh;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3);
   }
   
   .btn:hover {
@@ -225,10 +249,11 @@
   
   .btn:active {
     transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.3);
   }
   
   .btn-full {
-    grid-column: span 4;
+    grid-column: span 6;
   }
   
   .modal-overlay {
@@ -430,7 +455,6 @@
     font-weight: 700;
   }
   
-  /* Video invisible para fallback */
   #video-fallback {
     position: fixed;
     top: 0;
@@ -442,34 +466,30 @@
     z-index: -1;
   }
   
-  @media (orientation: portrait) {
-    .controles {
-      grid-template-columns: repeat(4, 1fr);
-    }
-    
-    .info-secundaria {
-      flex-direction: row;
-    }
-  }
-  
   @media (orientation: landscape) and (max-height: 500px) {
-    .header { height: 6vh; }
+    .header { height: 8vh; }
     .info-secundaria { height: 8vh; }
-    .footer { height: 12vh; }
+    .footer { height: 10vh; }
     
     .tiempo-base {
-      font-size: clamp(5rem, 25vh, 15rem);
+      font-size: clamp(8rem, 35vh, 25rem);
     }
     
     .tiempo-extra {
-      font-size: clamp(1.5rem, 8vh, 5rem);
+      font-size: clamp(2.5rem, 12vh, 8rem);
+    }
+    
+    .btn-icono {
+      width: 6vh;
+      height: 6vh;
+      min-width: 40px;
+      min-height: 40px;
     }
   }
 </style>
 </head>
 <body>
 
-<!-- Video invisible para mantener pantalla encendida (fallback) -->
 <video id="video-fallback" loop muted playsinline>
   <source src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAB1tZGF0AAAA" type="video/mp4">
 </video>
@@ -501,7 +521,7 @@
 <!-- MODAL DE REINICIO -->
 <div id="modal-restart" class="modal-overlay">
   <div class="modal">
-    <h2> REINICIAR PARTIDO</h2>
+    <h2>↺ REINICIAR PARTIDO</h2>
     <div class="aviso peligro">
       ¿Estás seguro de reiniciar el partido? Se perderá todo el progreso actual.
     </div>
@@ -523,7 +543,7 @@
     </div>
     <div class="modal-botones">
       <button class="btn" onclick="cerrarModalRestart()">✕</button>
-      <button class="btn" onclick="confirmarReinicio()"></button>
+      <button class="btn" onclick="confirmarReinicio()">↺</button>
     </div>
   </div>
 </div>
@@ -544,7 +564,7 @@
       </div>
       <div class="modal-opcion" onclick="activarPantallaCompleta()">
         <label>
-          <div class="titulo-opcion"> Pantalla Completa</div>
+          <div class="titulo-opcion">📺 Pantalla Completa</div>
           <div class="descripcion-opcion">Oculta la barra del navegador para mayor visibilidad</div>
         </label>
       </div>
@@ -583,8 +603,8 @@
     <div class="fase-label" id="fase-normal">PRIMER TIEMPO</div>
     <div class="header-botones">
       <button class="btn-icono" id="btn-wakelock" onclick="abrirModalWakeLock()" title="Mantener pantalla encendida">🔒</button>
-      <button class="btn-icono" onclick="abrirModalRestart()">↺</button>
-      <button class="btn-icono" onclick="abrirModal()">⚙</button>
+      <button class="btn-icono" onclick="abrirModalRestart()" title="Reiniciar">↺</button>
+      <button class="btn-icono" onclick="abrirModal()" title="Configuración">⚙</button>
     </div>
   </div>
   
@@ -607,14 +627,12 @@
   
   <div class="footer">
     <div class="controles">
-      <button class="btn" id="btn-play-normal" onclick="togglePausaNormal()"></button>
+      <button class="btn" id="btn-play-normal" onclick="togglePausaNormal()">⏸</button>
       <button class="btn" onclick="agregarMinuto(1)">+1</button>
       <button class="btn" onclick="agregarMinuto(2)">+2</button>
-      <button class="btn" onclick="finalizarTiempo()">⏹</button>
-    </div>
-    <div class="controles">
       <button class="btn" onclick="agregarMinuto(5)">+5</button>
       <button class="btn" onclick="agregarMinuto(10)">+10</button>
+      <button class="btn" onclick="finalizarTiempo()"></button>
     </div>
   </div>
 </div>
@@ -626,7 +644,7 @@
     <div class="fase-label">TIEMPO ADICIONAL</div>
     <div class="header-botones">
       <button class="btn-icono" id="btn-wakelock-ad" onclick="abrirModalWakeLock()">🔒</button>
-      <button class="btn-icono" onclick="abrirModalRestart()">↺</button>
+      <button class="btn-icono" onclick="abrirModalRestart()"></button>
       <button class="btn-icono" onclick="abrirModal()">⚙</button>
     </div>
   </div>
@@ -654,11 +672,9 @@
       <button class="btn" id="btn-play-adicional" onclick="togglePausaAdicional()">⏸</button>
       <button class="btn" onclick="agregarMinuto(1)">+1</button>
       <button class="btn" onclick="agregarMinuto(2)">+2</button>
-      <button class="btn" onclick="finalizarTiempo()">⏹</button>
-    </div>
-    <div class="controles">
       <button class="btn" onclick="agregarMinuto(5)">+5</button>
       <button class="btn" onclick="agregarMinuto(10)">+10</button>
+      <button class="btn" onclick="finalizarTiempo()">⏹</button>
     </div>
   </div>
 </div>
@@ -765,9 +781,12 @@ let fechaInicioPartido = null;
 let intervaloPrincipal = null;
 let intervaloDescanso = null;
 
-// Wake Lock
 let wakeLockActivo = false;
 let wakeLockSentinel = null;
+
+// Audio
+let audioContext = null;
+let sonidoActivado = false;
 
 // ============ FUNCIONES DE UTILIDAD ============
 function formatoMMSS(segundos) {
@@ -786,10 +805,69 @@ function mostrarPantalla(id) {
   document.getElementById(id).classList.add('activa');
 }
 
-// ============ WAKE LOCK (MANTENER PANTALLA ENCENDIDA) ============
+// ============ SISTEMA DE AUDIO ============
+function inicializarAudio() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioContext.state === 'suspended') {
+    audioContext.resume();
+  }
+  sonidoActivado = true;
+}
+
+// Pitido tipo silbato de árbitro
+function reproducirPitido(duracion = 0.3, frecuencia = 800) {
+  if (!audioContext || !sonidoActivado) return;
+  
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  oscillator.frequency.value = frecuencia;
+  oscillator.type = 'square';
+  
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duracion);
+  
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + duracion);
+}
+
+// Secuencia de pitidos para aviso
+function reproducirAviso() {
+  if (!audioContext || !sonidoActivado) return;
+  
+  // Tres pitidos cortos
+  setTimeout(() => reproducirPitido(0.15, 1000), 0);
+  setTimeout(() => reproducirPitido(0.15, 1000), 200);
+  setTimeout(() => reproducirPitido(0.3, 1200), 400);
+}
+
+// Pitido largo para final
+function reproducirPitidoFinal() {
+  if (!audioContext || !sonidoActivado) return;
+  
+  // Pitido largo y agudo
+  reproducirPitido(1.5, 1500);
+  setTimeout(() => reproducirPitido(1.5, 1500), 500);
+}
+
+// Cuenta regresiva para descanso (3, 2, 1)
+function reproducirCuentaRegresiva() {
+  if (!audioContext || !sonidoActivado) return;
+  
+  setTimeout(() => reproducirPitido(0.2, 600), 0);
+  setTimeout(() => reproducirPitido(0.2, 700), 1000);
+  setTimeout(() => reproducirPitido(0.2, 800), 2000);
+  setTimeout(() => reproducirPitidoFinal(), 3000);
+}
+
+// ============ WAKE LOCK ============
 async function activarWakeLock() {
   try {
-    // Método 1: Wake Lock API (moderno)
     if ('wakeLock' in navigator) {
       wakeLockSentinel = await navigator.wakeLock.request('screen');
       wakeLockActivo = true;
@@ -799,12 +877,10 @@ async function activarWakeLock() {
         console.log('Wake Lock liberado');
       });
       
-      // Re-adquirir cuando la página vuelve a ser visible
       document.addEventListener('visibilitychange', manejarVisibilidad);
       
       alert('✓ Pantalla bloqueada. No se apagará automáticamente.');
     } else {
-      // Método 2: Fallback con video
       activarVideoFallback();
     }
     cerrarModalWakeLock();
@@ -823,7 +899,6 @@ function desactivarWakeLock() {
   actualizarIndicadorWakeLock();
   document.removeEventListener('visibilitychange', manejarVisibilidad);
   
-  // Detener video fallback
   const video = document.getElementById('video-fallback');
   video.pause();
 }
@@ -866,7 +941,7 @@ function actualizarIndicadorWakeLock() {
       };
     } else {
       btn.classList.remove('wakelock-activo');
-      btn.textContent = '';
+      btn.textContent = '🔒';
       btn.title = 'Mantener pantalla encendida';
       btn.onclick = abrirModalWakeLock;
     }
@@ -881,7 +956,6 @@ function cerrarModalWakeLock() {
   document.getElementById('modal-wakelock').classList.remove('activo');
 }
 
-// ============ PANTALLA COMPLETA ============
 function activarPantallaCompleta() {
   const elem = document.documentElement;
   if (elem.requestFullscreen) {
@@ -987,6 +1061,9 @@ function confirmarReinicio() {
 
 // ============ INICIO DEL PARTIDO ============
 function iniciarPartido() {
+  // Inicializar audio con interacción del usuario
+  inicializarAudio();
+  
   configTiempo = parseInt(document.getElementById('cfg-tiempo').value) || 45;
   configDescanso = parseInt(document.getElementById('cfg-descanso').value) || 15;
   
@@ -1027,6 +1104,16 @@ function iniciarIntervaloPrincipal() {
       actualizarPantallaTiempo();
       
       const limiteSegundos = configTiempo * 60;
+      
+      // Aviso de 10 segundos antes del final del tiempo reglamentario
+      if (tiempoActualSegundos === limiteSegundos - 10 && tiempoAdicionalSegundos === 0) {
+        reproducirAviso();
+        document.getElementById('tiempo-normal').classList.add('aviso');
+        setTimeout(() => {
+          document.getElementById('tiempo-normal').classList.remove('aviso');
+        }, 5000);
+      }
+      
       if (tiempoActualSegundos >= limiteSegundos && tiempoAdicionalSegundos === 0) {
         if (faseActual === 't1-normal') faseActual = 't1-adicional';
         else if (faseActual === 't2-normal') faseActual = 't2-adicional';
@@ -1083,11 +1170,13 @@ function finalizarTiempo() {
   if (faseActual === 't1-normal' || faseActual === 't1-adicional') {
     primerTiempoTotalSegundos = tiempoActualSegundos;
     primerTiempoAdicionalSegundos = tiempoAdicionalSegundos;
+    reproducirPitidoFinal();
     iniciarDescanso();
   } 
   else if (faseActual === 't2-normal' || faseActual === 't2-adicional') {
     segundoTiempoTotalSegundos = tiempoActualSegundos;
     segundoTiempoAdicionalSegundos = tiempoAdicionalSegundos;
+    reproducirPitidoFinal();
     finalizarPartido();
   }
 }
@@ -1106,6 +1195,12 @@ function iniciarDescanso() {
     descansoRestanteSegundos--;
     descansoTranscurridoSegundos++;
     actualizarDescanso();
+    
+    // Cuenta regresiva de 3 segundos antes de terminar el descanso
+    if (descansoRestanteSegundos === 3) {
+      reproducirCuentaRegresiva();
+    }
+    
     if (descansoRestanteSegundos <= 0) {
       clearInterval(intervaloDescanso);
       iniciarSegundoTiempo();
@@ -1173,7 +1268,6 @@ function reiniciar() {
   mostrarPantalla('pantalla-config');
 }
 
-// ============ INICIALIZACIÓN ============
 document.addEventListener('DOMContentLoaded', () => {
   actualizarIndicadorWakeLock();
 });
